@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
 using UnityEngine;
 
@@ -51,7 +50,7 @@ public class ChipScript : MonoBehaviour {
             coords[1, 0] = Random.Range(0, 8);
             coords[1, 1] = Random.Range(0, 2 * coords[1, 0] + 1) & ~1;
         } while (coords[1, 0] == coords[0, 0] && coords[1, 1] == coords[0, 1]);
-        int f = 0;
+        int[] f = new int[2];
         for(int i = 0; i < 2; i++)
         {
             int n = 0;
@@ -64,10 +63,10 @@ public class ChipScript : MonoBehaviour {
                     n++;
                 }
             int p = pgrid[i][r];
-            f = Random.Range(1, 3);
-            pgrid[i][r] += f;
+            f[i] = Random.Range(1, 3);
+            pgrid[i][r] += f[i];
             pgrid[i][r] %= 3;
-            ruleind[i] = pgrid[i][r] + f;
+            ruleind[i] = pgrid[i][r] + f[i];
             ruleind[i] %= 3;
             for(int j = 0; j < 9; j++)
                 crends[9 * i + j].material = cmats[3 * pgrid[i][j] + Random.Range(0, 3)];
@@ -81,13 +80,13 @@ public class ChipScript : MonoBehaviour {
             switch (ruleind[2])
             {
                 case 0:
-                    int[][] adj = new int[9][] { new int[1] { 2 }, new int[2] { 2, 5 }, new int[3] { 0, 1, 4 }, new int[2] { 2, 7 }, new int[1] { 5 }, new int[3] { 1, 4, 6 }, new int[2] { 5, 7 }, new int[3] { 3, 6, 8 }, new int[1] { 7 } };
+                    int[][] adj = new int[9][] { new int[1] { 2 }, new int[2] { 2, 5 }, new int[3] { 0, 1, 3 }, new int[2] { 2, 7 }, new int[1] { 5 }, new int[3] { 1, 4, 6 }, new int[2] { 5, 7 }, new int[3] { 3, 6, 8 }, new int[1] { 7 } };
                     for (int j = 0; j < 9; j++)
                         eat[9 * i + j] = adj[j].Select(x => pgrid[i][x]).All(x => pgrid[i][j] != x);
                     break;
                 case 1:
                     for (int j = 0; j < 9; j++)
-                        eat[9 * i + j] = pgrid[i][j] == (ruleind[i] + f) % 3;
+                        eat[9 * i + j] = pgrid[i][j] == (ruleind[i] + f[i]) % 3;
                     break;
                 case 2:
                     int[] counts = new int[3];
@@ -119,7 +118,7 @@ public class ChipScript : MonoBehaviour {
                         }
                     break;
                 default:
-                    adj = new int[9][] { new int[1] { 2 }, new int[2] { 2, 5 }, new int[3] { 0, 1, 4 }, new int[2] { 2, 7 }, new int[1] { 5 }, new int[3] { 1, 4, 6 }, new int[2] { 5, 7 }, new int[3] { 3, 6, 8 }, new int[1] { 7 } };
+                    adj = new int[9][] { new int[1] { 2 }, new int[2] { 2, 5 }, new int[3] { 0, 1, 3 }, new int[2] { 2, 7 }, new int[1] { 5 }, new int[3] { 1, 4, 6 }, new int[2] { 5, 7 }, new int[3] { 3, 6, 8 }, new int[1] { 7 } };
                     for (int j = 0; j < 9; j++)
                         eat[9 * i + j] = adj[j].Select(x => pgrid[i][x]).Contains(1) ^ (pgrid[i][j] == 1);
                     break;
@@ -178,7 +177,7 @@ public class ChipScript : MonoBehaviour {
                 defvolume = GameMusicControl.GameMusicVolume;
                 GameMusicControl.GameMusicVolume = 0f;
             }
-            gimmemefuckinchips = Audio.PlaySoundAtTransformWithRef("funy", transform);
+            gimmemefuckinchips = Audio.PlaySoundAtTransformWithRef(TwitchPlaysActive ? "funyerer" : "funy", transform);
         }
         float a = -90;
         while (!moduleDisabled)
@@ -203,6 +202,8 @@ public class ChipScript : MonoBehaviour {
         }
     }
 
+    bool TwitchPlaysActive;
+
 #pragma warning disable
     private readonly string TwitchHelpMessage = "!{0} <1-9 / a-i> [Eats chips. Numbers indicate positions on the top of plate (which is shown when the plate as at its highest). Letters indicate positions on the bottom of the plate. Commands can be chained.] | !{0} colourblind [Toggles colourblind mode.]";
 #pragma warning restore
@@ -212,6 +213,7 @@ public class ChipScript : MonoBehaviour {
         command = command.ToLowerInvariant().Replace(" ", "");
         if (command == "colourblind" || command == "colorblind")
         {
+            yield return null;
             cb ^= true;
             Label(cb);
             yield break;
